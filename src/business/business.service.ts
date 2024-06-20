@@ -4,7 +4,7 @@ import { UpdateBusinessDto } from './dto/update-business.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Business } from './schemas/business.schema';
 import { HydratedDocument, Model } from 'mongoose';
-import { format } from 'date-fns';
+import { endOfDay, format, startOfDay } from 'date-fns';
 
 @Injectable()
 export class BusinessService {
@@ -24,11 +24,11 @@ export class BusinessService {
       matchStage.enterprise_name = name;
     }
     if (date_from) {
-      matchStage.created_at = { ...matchStage.created_at, $gte: new Date(date_from) };
+      matchStage.created_at = { ...matchStage.created_at, $gte: startOfDay(new Date(date_from)) };
     }
 
     if (date_to) {
-      matchStage.created_at = { ...matchStage.created_at, $lte: new Date(date_to) };
+      matchStage.created_at = { ...matchStage.created_at, $lte: endOfDay(new Date(date_to)) };
     }
     pipeline.push(
       {
@@ -60,7 +60,7 @@ export class BusinessService {
     const results = await this.businessModel.aggregate(pipeline).exec();
     console.table(results)
 
-    const totalData = results[0]?.totalData?.map(result => {
+    const totalData = results.map(result => {
       return ({
 
         name: result.name,
