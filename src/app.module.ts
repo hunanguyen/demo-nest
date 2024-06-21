@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BusinessModule } from './business/business.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TransformInterceptor } from './business/interceptors/response.interceptor';
+import { PrismaModule } from '../prisma/prisma.module';
 @Module({
   imports: [
     MongooseModule.forRootAsync({
@@ -22,7 +23,8 @@ import { TransformInterceptor } from './business/interceptors/response.intercept
     ConfigModule.forRoot( {
       isGlobal: true,
     }),
-    BusinessModule
+    BusinessModule,
+    PrismaModule
   ],
   controllers: [AppController],
   providers: [

@@ -1,9 +1,9 @@
-import { Injectable, UseInterceptors } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Business } from './schemas/business.schema';
-import { HydratedDocument, Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { endOfDay, format, startOfDay } from 'date-fns';
 
 @Injectable()
@@ -14,14 +14,17 @@ export class BusinessService {
   }
 
   create(createBusinessDto: CreateBusinessDto) {
-    return 'This action adds a new business';
+    const business = new this.businessModel();
+    business.email = createBusinessDto.email;
+    business.enterprise_name = createBusinessDto.name;
+    return business.save();
   }
 
   async findAll(name?: string, page: number = 1, limit: number = 10, date_from?: Date, date_to?: Date): Promise<any> {
     const pipeline = [];
     const matchStage: any = {};
     if (name) {
-      matchStage.enterprise_name = name;
+      matchStage.enterprise_name = { $regex: name, $options: 'i' };
     }
     if (date_from) {
       matchStage.created_at = { ...matchStage.created_at, $gte: startOfDay(new Date(date_from)) };
@@ -58,7 +61,7 @@ export class BusinessService {
     ).exec();
 
     const results = await this.businessModel.aggregate(pipeline).exec();
-    console.table(results)
+    // console.table(results)
 
     const totalData = results.map(result => {
       return ({
@@ -80,15 +83,30 @@ export class BusinessService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} business`;
+  async findOne(id: string): Promise<Business> {
+    const business = await this.businessModel.findOne({ _id: id}).exec();
+    if (!business) {
+      throw new NotFoundException(`Business with ID ${id} not found`);
+    }
+    return business;
   }
 
-  update(id: number, updateBusinessDto: UpdateBusinessDto) {
-    return `This action updates a #${id} business`;
+  async update(id: string, updateBusinessDto: UpdateBusinessDto) {
+    const newBusiness = new Business();
+
+
+    return await this.businessModel.findByIdAndUpdate(
+      new mongoose.Types.ObjectId(id),
+      {
+        $set: updateBusinessDto
+      },
+      {
+        new: true, runValidators: true
+      }
+    ).exec();
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} business`;
+  async remove(id: string) {
+    return this.businessModel.deleteOne({ _id: id});
   }
 }

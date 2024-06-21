@@ -5,8 +5,6 @@ export type BusinessDocument = mongoose.HydratedDocument<Business>;
 
 @Schema({ collection: 'lgo_business', timestamps: true })
 export class Business {
-  @Prop()
-  _id: string;
 
   @Prop({ type: String })
   email: string;
